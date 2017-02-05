@@ -123,7 +123,8 @@ var Lua = exports.Lua = {
 		// rawset
 		// rawseti
 		// rawsetp
-		"remove":            emscripten.cwrap('lua_remove',            null,     ["number", "number"]),
+		// remove
+		"rotate":        emscripten.cwrap('lua_rotate',           null,     ["number", "number", "number"]),
 		// replace
 		// resume
 		// setallocf
@@ -427,6 +428,10 @@ Lua.State.prototype.pcall = function(n,r,f) {
 };
 Lua.State.prototype.tonumber = function(n) {
 	return this.tonumberx(n, null);
+};
+Lua.State.prototype.remove = function(n) {
+    this.rotate(n,-1);
+    this.pop(1);
 };
 
 // Debugging
