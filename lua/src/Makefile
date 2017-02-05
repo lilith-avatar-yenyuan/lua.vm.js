@@ -118,7 +118,6 @@ emscripten:
 			-s INVOKE_RUN=0 \
 			-s ABORTING_MALLOC=0 \
 			-s NO_EXIT_RUNTIME=1 \
-			-s TOTAL_MEMORY=134217728 \
 			-s RESERVED_FUNCTION_POINTERS=8 \
 			--memory-init-file 0 \
 			--post-js ../../src/lua.js \

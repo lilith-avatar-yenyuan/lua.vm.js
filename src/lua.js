@@ -180,7 +180,7 @@ var Lua = exports.Lua = {
 		// gsub
 		// len
 		"loadbufferx":       emscripten.cwrap('luaL_loadbufferx',      "number", ["number", "array", "number", "string", "string"]),
-		// loadfilex
+		"loadfilex":         emscripten.cwrap('luaL_loadfilex',      "number", ["number","string", "string"]),
 		// loadstring
 		"newmetatable":      emscripten.cwrap('luaL_newmetatable',     "number", ["number", "string"]),
 		"newstate":          emscripten.cwrap('luaL_newstate',         "number", []),
@@ -555,6 +555,43 @@ Lua.State.prototype.load = function(code, name, mode) {
 	this.pop(1);
 	return r;
 };
+if(ENVIRONMENT_IS_NODE)
+{
+    FS.mkdir('/root');
+    FS.mount(NODEFS, {root : "."}, '/root');
+	Lua.State.prototype.filesystem = function() {
+    	return FS;
+	}
+	Lua.State.prototype.mount = function(rootdir,point) {
+    	FS.mkdir(point);
+        FS.mount(NODEFS, {root : rootdir}, point);
+	}
+	Lua.State.prototype.unmount = function(point) {
+        FS.unmount(point);
+		FS.rmdir(point)
+	}
+	Lua.State.prototype.chroot = function(rootdir) {
+		this.root_dir = rootdir
+		FS.unmount('/root')
+        FS.mount(NODEFS, {root : rootdir}, '/root');
+        FS.chdir('/root/');
+	}
+	Lua.State.prototype.chdir = function(cwdir) {
+		var path = require('path');
+        var cwd = path.relative(this.root_dir, cwdir);
+        FS.chdir('/root/' + cwd);
+	}
+	Lua.State.prototype.loadfile = function(filepath, mode) {
+		var path = require('path');
+        var relfilepath = path.relative(this.root_dir,filepath);
+		if (this.loadfilex(relfilepath,mode) !== 0) {
+			throw new Lua.Error(this, -1);
+		}
+		var r = new Lua.Proxy(this, -1);
+		this.pop(1);
+		return r;
+	};
+}
 Lua.State.prototype.execute = function(code) {
 	var proxy = this.load(code);
 	var args = slice.call(arguments, 1);
